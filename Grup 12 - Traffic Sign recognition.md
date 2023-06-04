@@ -1,0 +1,642 @@
+﻿<a name="br1"></a> 
+
+**Deep Learning - Traffic Sign recognition**
+
+Grup 12
+
+●
+
+●
+
+●
+
+Berta Expósito
+
+Carla Navarro
+
+Andreu Cuevas
+
+Juny de 2023
+
+**1. Introducció**
+
+En els darrers anys, l’avança de tècniques de Deep Learning ha revolucionat certs aspectes
+
+de la visió per computador. Entre aquests, object recognition, image segmentation i face
+
+detection. Una d’aquestes aplicacions que ha guanyat bastant de reconeixement és la
+
+classificació de senyals de tràfic, un component crític dels Advanced Driver Assistance
+
+Systems (ADAS) i vehicles autònoms.
+
+CNN o Convolutional Neural Network és un mètode òptim per processar dades en forma
+
+d’imatge. Pot extreure característiques de forma molt efectiva directament sobre els valors
+
+dels píxels, sent així altament indicada per la **classificació multi-classe** d’imatges, senyals
+
+de tràfic en el nostre cas.
+
+L’objectiu del projecte és construir un sistema robust de reconeixement de senyals de tràfic
+
+empleant diferents arquitectures de CNN. Fent servir les dades corresponents, en aquest
+
+cas el German Traffic Sign Recognition Benchmark, aspirem a dissenyar una xarxa CNN
+
+que sigui capaç de classificar de manera precisa en un ample rang de senyals de tràfic.
+
+El desenvolupament d’aquest projecte seguirà múltiple passes. Primerament,
+
+preprocessarem i augmentarem les dades per a incrementar la capacitat del model de
+
+tractar amb diferents il·luminacions, punts de vista, etc. Seguidament, dissenyarem i
+
+entrenarem l’arquitectura CNN, provant l’ús de diferents arquitectures: VGGNet, ResNet, …
+
+i veurem quina s’adapta millor a les necessitats del reconeixement de senyals de tràfic.
+
+Amb tots els resultats de les diferents arquitectures, podem concluir quina s’hi adapta millor
+
+mitjançant un conjunt de mètriques d’evaluació. Compararem els resultats dels diferents
+
+mètods i, finalment, comprovarem la seva robustesa fent servir unes noves dades
+
+completament diferents i que contenen imatges de senyals de tràfic de localitzacions
+
+distants a la del dataset original.
+
+
+
+<a name="br2"></a> 
+
+**2. Metodologia**
+
+**2.1 Dades**
+
+El dataset principal que hem fet servir ha estat el GTSRB - German Traffic Sign Recognition
+
+Benchmark. Link de Kaggle:
+
+<https://www.kaggle.com/datasets/meowmeowmeowmeowmeow/gtsrb-german-traffic-sign>
+
+Aquest conté detalls interessants que poden ser útils per a la nostra recerca:
+
+1\. Mida: Conté més de 50000 imatges de senyals de tràfic, sent així un dels datasets
+
+públics més grans d’aquest tipus d’imatge.
+
+2\. Variablitat d’imatges: El dataset conté imatges de tràfic capturades sota diferents
+
+circumstàncies en quant a il·luminació, condicions meteorològiques i punts de vista.
+
+Aquesta variabilitat ajuda a crear més robustesa en el model.
+
+3\. Classes de senyals: Conté 43 classes diferents de senyals de tràfic.
+
+4\. Annotacions i format: Cada imatge del dataset conté una annotació corresponent
+
+que dona informació sobre la classe corresponent i la bounding box de la senyal en
+
+relació a la imatge. Això ajuda tant a la avaluació com a la localització de la pròpia
+
+senyal dins la imatge.
+
+5\. Separació de training i testing: El training set conté aproximadament 39000 images, i
+
+el test set unes 12000.
+
+**2.2 CNN i arquitectures**
+
+Convolutional Neural Networks (CNNs) son un tipus d’arquitectura de Deep Learning
+
+dissenyat específicament per tasques de processament d’imatges. Tot i que l’starting point
+
+que vam fer servir no aplicava cap arquitectura en concret, vam decidir fer una recerca
+
+sobre quines arquitectures hi eren disponibles i quines es podien ajustar millor a les nostres
+
+necessitats.
+
+Les diferents capes, en ordre, que l’starting point ofereix són les següents:
+
+1\. Conv2D(filters=16, kernel\_size=(3,3), activation='relu')
+
+2\. Conv2D(filters=32, kernel\_size=(3,3), activation='relu')
+
+3\. MaxPool2D(pool\_size=(2, 2))
+
+4\. BatchNormalization(axis=-1)
+
+5\. Conv2D(filters=64, kernel\_size=(3,3), activation='relu')
+
+6\. Conv2D(filters=128, kernel\_size=(3,3), activation='relu')
+
+7\. MaxPool2D(pool\_size=(2, 2))
+
+8\. BatchNormalization(axis=-1)
+
+9\. Flatten()
+
+10\. Dense(512, activation='relu')
+
+11\. BatchNormalization()
+
+12\. Dropout(rate=0.5)
+
+13\. Dense(43, activation='softmax')
+
+Les capes de convolució extreuen característiques locals específiques com cantonades,
+
+marcs, vores, textures. Un conjunt de capes convolucionals són capaces de capturar
+
+característiques cada cop més complexes.
+
+Després de cada capa convolucional, una funció d’activació (ReLu o softmax en aquest cas)
+
+és aplicada per tal de modelar relacions més complexes i incrementar la capacitat de la
+
+xarxa d’aprendre.
+
+
+
+<a name="br3"></a> 
+
+Les capes de pooling redueixen les dimensions espaials de les característiques a la vegada
+
+que mantenen la informació més rellevant. Pooling ajuda en reduir la complexitat
+
+computacional i mantenir un cert nivell de translation invariance (terme referit a la capacitat
+
+de la xarxa de reconèixer un cert patró o objecte independentment de la posició o orientació
+
+en el pla de la imatge).
+
+Batch normalization millora la velocitat de convergència entre les diferents capes, regularitza
+
+la xarxa i activa l’ús d’un learning rate superior, entre d’altres.
+
+Droput és una tècnica usada principalment per evitar overfitting. “Desactiva” una sèrie de
+
+neurones de la xarxa durant l’entrenament, cosa que afegeix robustesa i capacitat
+
+d’aprendre característiques més generalitzades.
+
+La capa de flatten fa un reshape dels outputs de capes anteriors i els converteix en vectors
+
+d’una dimensió. Aquests són els que s’envien a les fully connected layers.
+
+Les dense layers fan la classificació final basada en les característiques extragudes en les
+
+capes convolucionals del principi. El propòsit és aprendre les relacions no lineals entre
+
+aquestes característiques i les etiquetes de classificació (diferents classes de senyals).
+
+
+
+<a name="br4"></a> 
+
+Vam buscar les arquitectures que poguessin obtenir una major accuracy en un nombre
+
+menor d’operacions, mantenint una complexitat senzilla del model. Vam escollir aquesta
+
+sèrie de mètodes per intentar tenir una millor eficiència i interpretabilitat, a més de descartar
+
+models que tendeixen a tenir overfitting. Aquestes arquitectures poden fer al model
+
+aprendre i reconèixer patrons més complexos i variacions em les senyals estudiades en
+
+comparació a l’estructura bàsica de CNN, fent que els resultats siguin més precisos.
+
+●
+
+DenseNet: Aporta enhanced feature reuse, millor eficiència paramètrica,
+
+aprenentatge de característiques multi-escala, millora el gradient flow i knowledge
+
+transfer. En general, crea una millor cohesió entre les capes del model permetent a
+
+la informació i les característiques apreses per la xarxa una mobilitat més fàcil.
+
+ResNet: permet la creació de xarxes més profunds, habilita l’entrenament
+
+d’aquestes, millora la convergència durant l’entrenament i es pot adaptar millor a
+
+complexitats de senyals molt diferents.
+
+GoogleNet (Inception V1): La seva arquitectura profunda, inception modules, global
+
+average pooling i classificadors auxiliar, permeten a la xarza capturar
+
+característiques multi-escala, mantenir informació espaial, millorar la convergència
+
+de l’entrenament mentre que, a la vegada, redueix la complexitat computacional.
+
+MobileNet: La seva capacitat de mantenir uns resultats raonablement precisos,
+
+sense sacrificar eficiència i petita complexitat fan que sigui una opció molt
+
+recomanable per a entorns de baixos recursos.
+
+●
+
+●
+
+●
+
+●
+
+DualPath-98: No vam fer servir aquest model al final per la seva pobre eficiència
+
+computacionalment. To t i això, si que vam considerar aquesta arquitectura. Aporta
+
+els beneficis de les dual path connections. Així com ResNet es centra en el re-usage
+
+de característiques, i DenseNet en l’exploració de noves features, DualPath té la
+
+capacitat de combinar ambdues tendències.
+
+**2.3 Training**
+
+Les opcions valorades per entrenar la xarxa són les següents:
+
+1\. Supervised Learning: Hem fet servir aquest mètode per entrenar mitjançant dades
+
+etiquetades, i on cada input és associat amb un corresponent target o label.
+
+2\. Data Augmentation: Utilitzat per augmentar la versatilitat de les dades mitjançant
+
+tècniques de manipulació d’imatges. Milloren la precisió i la performance del model.
+
+Les més utilitzades són les següents. Es pot apreciar com, d’una mostra passem a
+
+cinc:
+
+3\. Learning Rate finder: Aquesta tècnica permet trobar el Learning Rate més adequatp
+
+per a entrenar el model. No hem fet servir aquesta tècnica ja que, al estar tractant
+
+amb unes dades i uns models relativament senzills, hem considerat el Learning rate
+
+
+
+<a name="br5"></a> 
+
+de l’starting point, 0.001, era correcte. En la següent imatge es pot veure com fluctua
+
+el learning rate i com el model convergeix en conseqüència.
+
+4\. Transfer Learning: Aquesta tècnica permet entrenar un model partint dels pesos d’un
+
+altre, d’un coneixement previ. S’augmenta el coneixement i representacions ja
+
+apreses d’un model pre-entrenat per millorar la performance del model actual, inclós
+
+amb dades etiquetades limitades. És un enfocament beneficial perquè salva temps i
+
+recursos computacionals, a més de millorar la capacitat de generalització del model.
+
+**2.4 Mètriques d’avaluació**
+
+Totes les mètriques que farem servir durant aquest projecte, per realitzar una validació i
+
+comparació correcta de models, són les següents:
+
+●
+
+Mètriques generals:
+
+○
+
+○
+
+Overall accuracy: Precisió del model amb imatges que mai ha vist/processat.
+
+Training accuracy: Indicador de com de bé s’ha adaptat únicament al dataset
+
+d’entrenament.
+
+●
+
+Overfitting check (visualment):
+
+○
+
+Training loss/accuracy: La training loss baixa a mesura que el model aprèn a
+
+fer millor prediccions sobre el temps. La training accuracy indica com de bé
+
+s’ha adaptat el model a les dades d’entrenament.
+
+○
+
+Validation loss/accuracy: La validation loss fa una estimació de la capacitat
+
+del model d’adaptar-se a dades mai vistes. Si el valor comença a pujar
+
+
+
+<a name="br6"></a> 
+
+mentre que la training loss baixa, pot ser un indicador d’overfitting. La
+
+validation accuracy mostra la performance del model davant dades
+
+desconegudes.
+
+●
+
+Mètriques de classes específiques (“Stop”, “No passing”, “No entry”, “Children
+
+crossing”, “Wild animals crossing”). Amb aquestes, podem entendre millor la matriu
+
+de confusió creada per cadascuna de les prediccions.
+
+○
+
+○
+
+○
+
+Precision: Accuracy de preciccions positives. Precision = True Positives /
+
+(True Positives + False Positives)
+
+Recall: Es centra en la capacitat del model d’identificar instàncies positives.
+
+Recall = True Positives / (True Positives + False Negatives)
+
+F1-score: mètrica que combina precisió y recall. Útil per situations en les
+
+quals les classes estan desbalancejades. F1-score = 2 \* (Precision \* Recall) /
+
+(Precision + Recall)
+
+**3. Resultats i comparació**
+
+**Model**
+
+CNN original
+
+DenseNet
+
+ResNet
+
+**Overall Accuracy**
+
+**Training Accuracy**
+
+98%
+
+97%
+
+14%
+
+59%
+
+32%
+
+98%
+
+97%
+
+14%
+
+59%
+
+33%
+
+GoogleNet
+
+MobileNet
+
+Per a les 5 senyals escollides com a “més importants”,
+
+hem obtingut aquests resultats:
+
+
+
+<a name="br7"></a> 
+
+Overfitting check:
+
+CNN original:
+
+\-
+
+\-
+
+Training:
+
+\-
+
+Validation:
+
+
+
+<a name="br8"></a> 
+
+\-
+
+Confusion matrix:
+
+
+
+<a name="br9"></a> 
+
+\-
+
+DenseNet:
+
+\- Training:
+
+\-
+
+Validation:
+
+
+
+<a name="br10"></a> 
+
+\-
+
+Confusion matrix:
+
+
+
+<a name="br11"></a> 
+
+\-
+
+ResNet:
+
+\- Training:
+
+\-
+
+Validation:
+
+
+
+<a name="br12"></a> 
+
+\-
+
+Confusion matrix:
+
+
+
+<a name="br13"></a> 
+
+\-
+
+GoogleNet:
+
+\- Training:
+
+\-
+
+Validation:
+
+
+
+<a name="br14"></a> 
+
+\-
+
+Confusion matrix:
+
+\-
+
+MobileNet:
+
+Training:
+
+\-
+
+
+
+<a name="br15"></a> 
+
+\-
+
+Validation:
+
+
+
+<a name="br16"></a> 
+
+\-
+
+Confusion matrix:
+
+**3.1 Resultats per altres dades**
+
+●
+
+Dataset = Chinese Traffic Signs:
+
+<https://www.kaggle.com/datasets/dmitryyemelyanov/chinese-traffic-signs>
+
+Accuracy: 96%
+
+Training and validation accuracy:
+
+●
+
+●
+
+
+
+<a name="br17"></a> 
+
+●
+
+Training and validation loss:
+
+●
+
+Confusion matrix:
+
+
+
+<a name="br18"></a> 
+
+**4. Conclusions**
+
+Finalment, per concloure aquest informe sobre el treball realitzat aquestes setmanes, volem
+
+comentar alguns punts que hauriem executat de forma diferent durante l’elaboració de les
+
+proves i que, amb l'experiència d’aquestes setmanes i la recerca de les conclusions
+
+obtingudes amb els nostres resultats, veiem que s’han realitzat de forma errónea.
+
+1\. Primerament cal comentar que vam decidir entrenar desde 0 el nostres models, fent
+
+aprendre la xarxa amb tot el dataset complet “from scratch”. Si tenim en compte que
+
+el dataset té una mida de 40 mil imatges aproximadament i un total de 40 classes,
+
+els recursos de còmput que requeriem per llençar només un entrenament eren
+
+massa grans. Si tenim en compte que estem en realitzant un projecte, i que per tant,
+
+calien varies probes de cada model que volguessim entrenar per tal de jugar amb
+
+diferents valors de paràmetres, diferents models, etc., llençar cada model amb tot el
+
+dataset desde 0 ha estat una decisió equivocada. Fent recerca per Internet, trobem
+
+moltes pàgines que ofereixen per diferents arquitectures, fitxers de pesos per poder
+
+llençar un entrenament partint d’un coneixement previ. D’això en diem Transfer
+
+
+
+<a name="br19"></a> 
+
+Learning, com prèviament ja hem comentat en l’informe però que no vam arribar a
+
+aplicar.
+
+2\. Un altre punt interessant que no hem profunditzat suficient al nostre treball ha estat
+
+el número d’epochs amb el que s’ha entrenat cada model de CNN. Tots els nostres
+
+models han sigut entrenats amb el mateix número d’epochs. En conseqüència, no
+
+hem sigut capaços d’extreure les conclusions correctes per tots els models, ja que
+
+l’entrenament i aprenentatge d’alguns no ha estat satisfactòria per la falta
+
+d’entrenament. Hem de tenir en compte que l’estructura dels models era diferent, pel
+
+que en casos on aquesta estructura era més complexe o les capes de pesos
+
+estaven més interconectades, el número d’epochs que necessitaven per aprendre
+
+les dades era major. Aquest fet també ha estat molt lligat al primer punt. El fet de no
+
+haver entrenat partint d’un coneixement prèvi i per tant requerint de 300 i 400 epochs
+
+per un sol model i prova per aprendre, ha limitat el nostre temps per poder tenir
+
+resultats de totes les proves que voliem realitzar.
+
+3\. Per últim, en la realització del nostre projecte creiem que hagués estat interessant
+
+profunditzar més en el valors dels hiperparàmetres de les xarxes entrenades. Jugar
+
+amb diferents valors de Learning-rate, batch-size, provar diferents funcions
+
+d’optmització, etc. hagués estat interessant per explorar els CNN i arribar a accuracy
+
+més altes en els models on no ha funcionat tant bé.
+
+Amb el comentat anteriorment, creiem que aquest projecte podria haver obtingut millors
+
+resultats. No obstant, considerem haver après de l’experiencia i acabat el projecte amb una
+
+perspectiva més pràctica de les xarxes neuronals profundes.
+
